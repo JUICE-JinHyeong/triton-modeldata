@@ -1,5 +1,5 @@
 name: "psng_predictor"
-platform: "python_backend"
+backend: "python"
 max_batch_size: 1
 input [
   {
