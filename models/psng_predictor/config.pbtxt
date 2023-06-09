@@ -4,20 +4,20 @@ max_batch_size: 1
 input [
   {
     name: "input"
-    data_type: TYPE_STRING
-    dims: [1]
+    data_type: TYPE_FP32
+    dims: [ -1, 250 ]
   }
 ]
 output [
   {
     name: "output"
-    data_type: TYPE_INT32
-    dims: [1]
+    data_type: TYPE_FP32
+    dims: [ -1, 1 ]
   }
 ]
-parameters [
+instance_group [
   {
-    key: "config_file"
-    value: "/path/to/config.yaml"
+    count: 1
+    kind: KIND_GPU
   }
 ]
