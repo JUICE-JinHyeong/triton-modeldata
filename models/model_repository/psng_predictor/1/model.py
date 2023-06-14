@@ -1,34 +1,39 @@
 import triton_python_backend_utils as pb_utils
-from predict_rena_v3 import psng_predict_all_v3
+import numpy as np
+from tensorflow.keras.models import load_model
 
 class TritonPythonModel:
     def initialize(self, args):
+        """모델 초기화 함수"""
         print('Initialized...')
-    
+        self.loaded_model = load_model('posneg_no_oneword_v3.h5')
+
     def execute(self, requests):
         responses = []
+
         for request in requests:
-            input_tensors = pb_utils.get_input_tensor_by_name(request, "input")
-            input_data = pb_utils.tensor_to_ndarray(input_tensors[0])
+            input_tensor = pb_utils.get_input_tensor_by_name(request, 'input_tensor')
+            input_data = input_tensor.as_numpy()
 
-            # 입력 데이터를 리스트로 변환
-            input_data_list = input_data.tolist()
+            # 모델 추론 실행
+            output_data = self.loaded_model.predict(input_data)
 
-            # psng_predict_all_v3 클래스의 인스턴스 생성
-            model = psng_predict_all_v3(input_data_list)
+            # 결과를 새로운 텐서로 저장
+            output_tensor = pb_utils.Tensor(output_data)
 
-            # 예측 실행
-            predictions = model.prediction()
-
-            # 예측 결과를 Triton의 출력 텐서로 변환
-            output_tensor = pb_utils.Tensor("output", data=predictions)
-
-            # InferenceResponse 생성
-            response = pb_utils.InferenceResponse()
-            response.add_output(output_tensor)
+            # 추론 응답 생성
+            response = pb_utils.InferenceResponse(output_tensors=[output_tensor])
             responses.append(response)
 
         return responses
-    
+
+
     def finalize(self):
-        print("Cleaning up...")
+        """모델 종료 함수"""
+        print('Cleaning up...')
+
+# 모델 객체 생성
+model = TritonPythonModel()
+
+# 모델을 Triton Inference Server에 등록
+pb_utils.run(model)
